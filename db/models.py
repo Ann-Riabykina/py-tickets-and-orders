@@ -119,4 +119,3 @@ class Ticket(models.Model):
     def __str__(self) -> str:
         return (f"<Ticket: {self.movie_session} "
                 f"(row: {self.row}, seat: {self.seat})>")
-
