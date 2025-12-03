@@ -16,13 +16,11 @@ def create_order(
         date: Optional[str] = None
 ) -> Order:
     user = User.objects.get(username=username)
-    order = Order(user=user)
-
+    order_data = {"user": user}
     if date:
-        order.created_at = datetime.fromisoformat(date)
-    else:
-        order.created_at = datetime.now()
-    order.save()
+        order_data["created_at"] = datetime.fromisoformat(date)
+
+    order = Order.objects.create(**order_data)
 
     for ticket in tickets:
         ticket = Ticket(
