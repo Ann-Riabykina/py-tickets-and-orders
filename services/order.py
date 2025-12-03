@@ -1,6 +1,12 @@
-from typing import List, Optional
+from django.db.models import QuerySet
+from typing import Optional
+from datetime import datetime
 from django.db import transaction
-from db.models import Order, Ticket, User
+from django.contrib.auth import get_user_model
+from db.models import Order, Ticket
+
+
+User = get_user_model()
 
 
 @transaction.atomic
@@ -10,24 +16,29 @@ def create_order(
         date: Optional[str] = None
 ) -> Order:
     user = User.objects.get(username=username)
-    order = Order.objects.create(user=user)
+    order = Order(user=user)
 
     if date:
-        order.created_at = date
-        order.save()
+        order.created_at = datetime.fromisoformat(date)
+    else:
+        order.created_at = datetime.now()
+    order.save()
 
-    for ticket_data in tickets:
-        Ticket.objects.create(
+    for ticket in tickets:
+        ticket = Ticket(
             order=order,
-            movie_session_id=ticket_data["movie_session"],
-            row=ticket_data["row"],
-            seat=ticket_data["seat"]
+            movie_session_id=ticket["movie_session"],
+            row=ticket["row"],
+            seat=ticket["seat"]
         )
+        ticket.full_clean()  # проверка row и seat
+        ticket.save()
 
     return order
 
 
-def get_orders(username: Optional[str] = None) -> List[Order]:
+def get_orders(username: Optional[str] = None) -> QuerySet[Order]:
+    queryset = Order.objects.all()
     if username:
-        return Order.objects.filter(user__username=username)
-    return Order.objects.all()
+        queryset = queryset.filter(user__username=username)
+    return queryset
